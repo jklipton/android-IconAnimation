@@ -1,40 +1,42 @@
 package com.example.kon7865.shakeanimation
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Color
+import android.graphics.*
 import android.view.View
-import android.graphics.BitmapFactory
 import android.view.MotionEvent
 import java.util.*
+import android.opengl.ETC1.getHeight
+import android.opengl.ETC1.getWidth
+import android.text.style.LineHeightSpan
 
 
 class AnimationView(context: Context) : View(context) {
 
     //all icons in array
-    val icon1 = Icon(getBitmapFromResources(R.drawable.heart), 100f, 100f)
-    val icon2 = Icon(getBitmapFromResources(R.drawable.heart), 250f, 100f)
-    val icon3 = Icon(getBitmapFromResources(R.drawable.heart), 400f, 100f)
-    val icon4 = Icon(getBitmapFromResources(R.drawable.heart), 100f, 400f)
-    val icon5 = Icon(getBitmapFromResources(R.drawable.heart), 250f, 400f)
+    //TODO: set floats to be responsive for screen widths
 
     val iconList = ArrayList<Icon>()
+
+    //canvas variables
+    var panelHeight = 0.0f
+    var iconWidth = 0
+    var iconHeight = 0
+    var iconMargin = 0
 
     init {
         setLayerType(LAYER_TYPE_HARDWARE, null)
         this.setOnTouchListener { v, event -> handleMotionEvent(event)}
-
-        iconList.add(icon1)
-        iconList.add(icon2)
-        iconList.add(icon3)
-        iconList.add(icon4)
-        iconList.add(icon5)
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        canvas.drawColor(Color.MAGENTA)
+
+        setCanvasVariables(canvas)
+        setIconFloats(canvas)
+        //draw each layer in a function, go from furthest back to front
+        drawBackground(canvas)
+        drawPanels(canvas)
+
 
         for (a: Icon in iconList) {
             a.animate()
@@ -44,12 +46,46 @@ class AnimationView(context: Context) : View(context) {
         postInvalidateDelayed(1000 / 30)
     }
 
+    private fun setIconFloats(canvas: Canvas) {
+
+        val heartIcon = Icon(getBitmapFromResources(R.drawable.icon_heart), iconMargin.toFloat(), 5f)
+        val toiletIcon = Icon(getBitmapFromResources(R.drawable.icon_toilet), 250f, 100f)
+        val foodIcon = Icon(getBitmapFromResources(R.drawable.icon_food), 400f, 100f)
+        val medsIcon = Icon(getBitmapFromResources(R.drawable.icon_meds), 100f, 400f)
+        val moneyIcon = Icon(getBitmapFromResources(R.drawable.icon_money), 250f, 400f)
+        val socialIcon = Icon(getBitmapFromResources(R.drawable.icon_social), 250f, 400f)
+        val createIcon = Icon(getBitmapFromResources(R.drawable.icon_create), 250f, 400f)
+        val settingsIcon = Icon(getBitmapFromResources(R.drawable.icon_settings), 250f, 400f)
+
+        iconList.addAll(Arrays.asList(heartIcon, toiletIcon, foodIcon, medsIcon, moneyIcon, socialIcon, createIcon, settingsIcon))
+        invalidate()
+    }
+    private fun setCanvasVariables(canvas: Canvas) {
+        panelHeight = (height / 7).toFloat()
+        iconWidth = (width / 2) / 4
+        iconMargin = width - (iconWidth * 4) / 4
+    }
+
     private fun handleMotionEvent( motionEvent: MotionEvent ):Boolean {
         //loop through array of icons, check if x and y in 100px for each icon1
         for (a: Icon in iconList) {
             a.runAnimation = (Math.abs(motionEvent.x - a.xp - 50) < 100 && Math.abs(motionEvent.y - a.yp - 50) < 100)
         }
         return true
+    }
+
+    private fun drawBackground(canvas: Canvas) {
+        canvas.drawColor(Color.rgb(247, 237, 217))
+    }
+
+    private fun drawPanels(canvas: Canvas){
+        var paintPink = Paint()
+        paintPink.color = Color.MAGENTA
+        canvas.drawRect(0f, 0f, width.toFloat(), panelHeight, paintPink)
+
+        var paintBlue = Paint()
+        paintBlue.color = Color.BLUE
+        canvas.drawRect( 0f, height - panelHeight, width.toFloat(), height.toFloat(), paintBlue )
     }
 
 
@@ -76,6 +112,7 @@ class AnimationView(context: Context) : View(context) {
 
     //index name (R.drawable.name) is a standin for resource ID int, gets compiled at build time
     fun getBitmapFromResources(resourceId: Int) : Bitmap {
-        return BitmapFactory.decodeResource(getResources(), resourceId)
+        var mBackground = BitmapFactory.decodeResource(getResources(), resourceId)
+        return Bitmap.createScaledBitmap(mBackground, iconWidth, iconHeight, true)
     }
 }
